@@ -1117,3 +1117,43 @@ aasync function generateResponse(message) {
     return "Sorry, I couldn't reach the AI. Check your internet connection.";
   }
 }
+// Failsafe chat button handler
+(function() {
+    console.log('Failsafe chat handler running...');
+    
+    const chatToggle = document.getElementById('chat-toggle');
+    const chatWindow = document.getElementById('chat-window');
+    const closeChat = document.getElementById('close-chat');
+    
+    if (chatToggle && chatWindow) {
+        // Remove any existing handlers and add new one
+        chatToggle.onclick = function(e) {
+            e.preventDefault();
+            console.log('Chat button clicked (failsafe)');
+            chatWindow.style.display = 'flex';
+        };
+    }
+    
+    if (closeChat && chatWindow) {
+        closeChat.onclick = function(e) {
+            e.preventDefault();
+            console.log('Close button clicked (failsafe)');
+            chatWindow.style.display = 'none';
+        };
+    }
+    
+    // Also add a backup using addEventListener
+    if (chatToggle) {
+        chatToggle.addEventListener('click', function(e) {
+            console.log('Chat button clicked (event listener)');
+            if (chatWindow) chatWindow.style.display = 'flex';
+        });
+    }
+    
+    if (closeChat) {
+        closeChat.addEventListener('click', function(e) {
+            console.log('Close button clicked (event listener)');
+            if (chatWindow) chatWindow.style.display = 'none';
+        });
+    }
+})();
