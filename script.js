@@ -1077,7 +1077,10 @@ async function callRealtimeAI(userMessage, savedSubjects, target) {
 }
 
 // UPDATED generateResponse function with better error handling and logging
-aasync function generateResponse(message) {
+// ==================== CHATBOT FUNCTIONS ====================
+
+// Make sure generateResponse is defined BEFORE it's used
+async function generateResponse(message) {
   // Quick greeting check
   const greeting = message.toLowerCase().trim();
   if (greeting === 'hi' || greeting === 'hello' || greeting === 'hey') {
@@ -1109,7 +1112,6 @@ aasync function generateResponse(message) {
     const data = await response.json();
     console.log('Response from function:', data);
     
-    // The function now always returns 200 with a reply
     return data.reply;
     
   } catch (error) {
@@ -1117,43 +1119,85 @@ aasync function generateResponse(message) {
     return "Sorry, I couldn't reach the AI. Check your internet connection.";
   }
 }
-// Failsafe chat button handler
-(function() {
-    console.log('Failsafe chat handler running...');
+
+// Make it globally available
+window.generateResponse = generateResponse;
+
+// ==================== FAILSAFE CHAT HANDLER ====================
+
+// ULTIMATE FAILSAFE - runs after everything loads
+window.addEventListener('load', function() {
+    console.log('Load event fired - applying final fixes');
     
+    const sendBtn = document.getElementById('send-btn');
+    const userInput = document.getElementById('user-input');
+    const chatContent = document.getElementById('chat-content');
     const chatToggle = document.getElementById('chat-toggle');
     const chatWindow = document.getElementById('chat-window');
     const closeChat = document.getElementById('close-chat');
     
+    // Fix chat toggle
     if (chatToggle && chatWindow) {
-        // Remove any existing handlers and add new one
-        chatToggle.onclick = function(e) {
-            e.preventDefault();
-            console.log('Chat button clicked (failsafe)');
+        chatToggle.onclick = () => {
             chatWindow.style.display = 'flex';
         };
     }
     
+    // Fix close button
     if (closeChat && chatWindow) {
-        closeChat.onclick = function(e) {
-            e.preventDefault();
-            console.log('Close button clicked (failsafe)');
+        closeChat.onclick = () => {
             chatWindow.style.display = 'none';
         };
     }
     
-    // Also add a backup using addEventListener
-    if (chatToggle) {
-        chatToggle.addEventListener('click', function(e) {
-            console.log('Chat button clicked (event listener)');
-            if (chatWindow) chatWindow.style.display = 'flex';
-        });
+    // Fix send button and enter key
+    if (sendBtn && userInput && chatContent) {
+        const sendMessage = async () => {
+            const text = userInput.value.trim();
+            if (!text) return;
+            
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'msg user';
+            userMsg.textContent = text;
+            chatContent.appendChild(userMsg);
+            
+            userInput.value = '';
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            
+            try {
+                // Use the globally available function
+                const response = await window.generateResponse(text);
+                
+                // Add bot message
+                const botMsg = document.createElement('div');
+                botMsg.className = 'msg bot';
+                botMsg.textContent = response;
+                chatContent.appendChild(botMsg);
+            } catch (error) {
+                console.error('Error in sendMessage:', error);
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'msg bot';
+                errorMsg.textContent = "Sorry, something went wrong.";
+                chatContent.appendChild(errorMsg);
+            }
+            
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            userInput.focus();
+            chatContent.scrollTop = chatContent.scrollHeight;
+        };
+        
+        // Attach handlers
+        sendBtn.onclick = sendMessage;
+        userInput.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        };
+        
+        console.log('Failsafe chat handlers attached');
     }
-    
-    if (closeChat) {
-        closeChat.addEventListener('click', function(e) {
-            console.log('Close button clicked (event listener)');
-            if (chatWindow) chatWindow.style.display = 'none';
-        });
-    }
-})();
+});
