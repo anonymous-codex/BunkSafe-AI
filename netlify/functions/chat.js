@@ -12,14 +12,17 @@ exports.handler = async (event) => {
   }
 
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+    return { 
+      statusCode: 405, 
+      headers, 
+      body: JSON.stringify({ error: 'Method not allowed' }) 
+    };
   }
 
   try {
     const { message, subjects, target } = JSON.parse(event.body);
     
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    console.log('API Key exists:', !!GEMINI_API_KEY);
     
     if (!GEMINI_API_KEY) {
       return {
@@ -29,56 +32,73 @@ exports.handler = async (event) => {
       };
     }
 
+    // Build subject context
     const subjectContext = subjects.map(s => {
       const percent = s.total > 0 ? ((s.attended / s.total) * 100).toFixed(1) : 0;
       return `${s.name}: ${s.attended}/${s.total} (${percent}%)`;
     }).join('\n');
 
-    const prompt = `You are Bunk Buddy, a friendly student assistant.
+    // Create a clear prompt
+    const prompt = `You are Bunk Buddy, a friendly student assistant for attendance tracking.
+
 Current attendance target: ${target}%.
 
-Subjects:
+Current attendance data:
 ${subjectContext}
 
-User: ${message}
+User question: ${message}
 
-Respond conversationally and helpfully:`;
+Instructions:
+- If this is a greeting (hi, hello, hey), respond warmly
+- If they ask about attendance, calculate and give clear advice
+- If they ask casual questions, respond naturally
+- Keep responses friendly and concise
 
-    console.log('Sending prompt to Gemini:', prompt.substring(0, 100) + '...');
+Response:`;
 
+    console.log('Sending to Gemini with model: gemini-2.0-flash');
+
+    // Use gemini-2.0-flash which is definitely available
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           contents: [{
-            parts: [{ text: prompt }]
-          }]
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 500
+          }
         })
       }
     );
 
-    console.log('Gemini response status:', response.status);
-    
-    const data = await response.json();
-    console.log('Gemini full response:', JSON.stringify(data, null, 2));
-
-    // Check if there's an error in the response
-    if (data.error) {
-      console.error('Gemini API error:', data.error);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error response:', response.status, errorText);
       return {
-        statusCode: 500,
+        statusCode: response.status,
         headers,
         body: JSON.stringify({ 
           error: 'Gemini API error',
-          details: data.error.message 
+          details: `Status ${response.status}: ${errorText}`
         })
       };
     }
 
+    const data = await response.json();
+    console.log('Gemini response received');
+
+    // Extract the reply
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 
-                  "Sorry, I couldn't generate a response.";
+                  "I'm not sure how to respond to that.";
 
     return {
       statusCode: 200,
