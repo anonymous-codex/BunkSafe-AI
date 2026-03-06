@@ -1,0 +1,19 @@
+{
+  "name": "bunksafe-ai",
+  "version": "1.0.0",
+  "description": "Attendance tracker with AI chatbot",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "attendance",
+    "tracker",
+    "ai",
+    "chatbot"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {}
+}
