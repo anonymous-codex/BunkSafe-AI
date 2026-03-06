@@ -12,11 +12,7 @@ exports.handler = async (event) => {
   }
 
   if (event.httpMethod !== 'POST') {
-    return { 
-      statusCode: 405, 
-      headers, 
-      body: JSON.stringify({ error: 'Method not allowed' }) 
-    };
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
   try {
@@ -37,71 +33,64 @@ exports.handler = async (event) => {
       return `${s.name}: ${s.attended}/${s.total} (${percent}%)`;
     }).join('\n');
 
-    const prompt = `You are Bunk Buddy, a friendly student assistant for attendance tracking.
-
+    const prompt = `You are Bunk Buddy, a friendly student assistant.
 Current attendance target: ${target}%.
 
-Current attendance data:
+Subjects:
 ${subjectContext}
 
-User question: ${message}
+User: ${message}
 
-Instructions:
-- If this is a greeting (hi, hello, hey), respond warmly
-- If they ask about attendance, calculate and give clear advice
-- If they ask casual questions, respond naturally
-- Keep responses friendly and concise
+Respond conversationally:`;
 
-Response:`;
+    console.log('Calling Gemini with prompt:', prompt.substring(0, 100) + '...');
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 500
-          }
+            parts: [{ text: prompt }]
+          }]
         })
       }
     );
 
-    // Handle rate limiting
-    if (response.status === 429) {
-      console.log('Rate limited by Gemini');
+    console.log('Gemini response status:', response.status);
+    
+    // Get the raw response text first
+    const responseText = await response.text();
+    console.log('Raw Gemini response:', responseText);
+
+    // Try to parse as JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
       return {
-        statusCode: 200, // Still return 200 to frontend
+        statusCode: 200,
         headers,
         body: JSON.stringify({ 
-          reply: "I'm getting too many requests right now! Please wait a minute and try again. The free tier has a limit of 60 requests per minute." 
+          reply: `Gemini returned non-JSON: ${responseText.substring(0, 200)}` 
         })
       };
     }
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini API error:', response.status, errorText);
+    // Check for error in response
+    if (data.error) {
       return {
-        statusCode: 200, // Return 200 with friendly message
+        statusCode: 200,
         headers,
         body: JSON.stringify({ 
-          reply: "Sorry, I'm having trouble connecting. Please try again in a moment." 
+          reply: `Gemini error: ${data.error.message || JSON.stringify(data.error)}` 
         })
       };
     }
 
-    const data = await response.json();
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 
-                  "I'm not sure how to respond to that.";
+                  "No response from Gemini";
 
     return {
       statusCode: 200,
@@ -112,10 +101,10 @@ Response:`;
   } catch (error) {
     console.error('Function error:', error);
     return {
-      statusCode: 200, // Always return 200 to frontend
+      statusCode: 200,
       headers,
       body: JSON.stringify({ 
-        reply: "Sorry, something went wrong. Please try again." 
+        reply: `Error: ${error.message}` 
       })
     };
   }
