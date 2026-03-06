@@ -1076,7 +1076,7 @@ async function callRealtimeAI(userMessage, savedSubjects, target) {
   }
 }
 
-// UPDATED generateResponse function that calls your Netlify function
+// UPDATED generateResponse function with better error handling and logging
 async function generateResponse(message) {
   // Quick greeting check
   const greeting = message.toLowerCase().trim();
@@ -1092,6 +1092,8 @@ async function generateResponse(message) {
       return "No subjects found yet. Add at least one subject in the tracker first.";
     }
     
+    console.log('Sending to function:', { message, subjects, target });
+    
     // Call your Netlify function
     const response = await fetch('/.netlify/functions/chat', {
       method: 'POST',
@@ -1106,8 +1108,10 @@ async function generateResponse(message) {
     });
     
     const data = await response.json();
+    console.log('Response from function:', data);
     
     if (!response.ok) {
+      console.error('Server error:', data);
       return "Sorry, I'm having trouble connecting. Please try again.";
     }
     
