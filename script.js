@@ -1077,7 +1077,7 @@ async function callRealtimeAI(userMessage, savedSubjects, target) {
 }
 
 // UPDATED generateResponse function with better error handling and logging
-async function generateResponse(message) {
+aasync function generateResponse(message) {
   // Quick greeting check
   const greeting = message.toLowerCase().trim();
   if (greeting === 'hi' || greeting === 'hello' || greeting === 'hey') {
@@ -1094,7 +1094,6 @@ async function generateResponse(message) {
     
     console.log('Sending to function:', { message, subjects, target });
     
-    // Call your Netlify function
     const response = await fetch('/.netlify/functions/chat', {
       method: 'POST',
       headers: {
@@ -1110,11 +1109,7 @@ async function generateResponse(message) {
     const data = await response.json();
     console.log('Response from function:', data);
     
-    if (!response.ok) {
-      console.error('Server error:', data);
-      return "Sorry, I'm having trouble connecting. Please try again.";
-    }
-    
+    // The function now always returns 200 with a reply
     return data.reply;
     
   } catch (error) {

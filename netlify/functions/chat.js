@@ -32,13 +32,11 @@ exports.handler = async (event) => {
       };
     }
 
-    // Build subject context
     const subjectContext = subjects.map(s => {
       const percent = s.total > 0 ? ((s.attended / s.total) * 100).toFixed(1) : 0;
       return `${s.name}: ${s.attended}/${s.total} (${percent}%)`;
     }).join('\n');
 
-    // Create a clear prompt
     const prompt = `You are Bunk Buddy, a friendly student assistant for attendance tracking.
 
 Current attendance target: ${target}%.
@@ -56,9 +54,6 @@ Instructions:
 
 Response:`;
 
-    console.log('Sending to Gemini with model: gemini-2.0-flash');
-
-    // Use gemini-2.0-flash which is definitely available
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
@@ -80,23 +75,31 @@ Response:`;
       }
     );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini API error response:', response.status, errorText);
+    // Handle rate limiting
+    if (response.status === 429) {
+      console.log('Rate limited by Gemini');
       return {
-        statusCode: response.status,
+        statusCode: 200, // Still return 200 to frontend
         headers,
         body: JSON.stringify({ 
-          error: 'Gemini API error',
-          details: `Status ${response.status}: ${errorText}`
+          reply: "I'm getting too many requests right now! Please wait a minute and try again. The free tier has a limit of 60 requests per minute." 
+        })
+      };
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error:', response.status, errorText);
+      return {
+        statusCode: 200, // Return 200 with friendly message
+        headers,
+        body: JSON.stringify({ 
+          reply: "Sorry, I'm having trouble connecting. Please try again in a moment." 
         })
       };
     }
 
     const data = await response.json();
-    console.log('Gemini response received');
-
-    // Extract the reply
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 
                   "I'm not sure how to respond to that.";
 
@@ -109,11 +112,10 @@ Response:`;
   } catch (error) {
     console.error('Function error:', error);
     return {
-      statusCode: 500,
+      statusCode: 200, // Always return 200 to frontend
       headers,
       body: JSON.stringify({ 
-        error: 'Failed to get response',
-        details: error.message 
+        reply: "Sorry, something went wrong. Please try again." 
       })
     };
   }
