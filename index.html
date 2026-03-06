@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>BunkSafe AI</title>
+  <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+
+  <!-- HEADER -->
+<div class="header">
+  <div class="header-spacer"></div>
+  <h1 class="app-title">BunkSafe AI</h1>
+
+  <div class="header-actions">
+  <button id="themeToggle">Dark</button>
+  <button id="addSubjectBtn">ADD SUBJECT</button>
+</div>
+</div>
+
+
+
+<!-- NOTIFICATION BAR -->
+<div id="notification" class="notification hidden"></div>
+
+
+<!-- OVERALL SUMMARY -->
+<div class="summary-card">
+  <div>
+    <p><b>Total Attendance:</b> <span id="overallPercent">0%</span></p>
+    <p id="todayDate"></p>
+  </div>
+</div>
+
+<!-- TARGET SLIDER -->
+<div class="card">
+  <h3>Set Attendance Target</h3>
+
+  <div class="slider-row">
+    <input type="range" id="targetSlider" min="60" max="90" value="75">
+    <span id="sliderPercent">75%</span>
+  </div>
+</div>
+
+<!-- OCR TIMETABLE SCANNER -->
+<div class="card timetable-card">
+  <h3>OCR Timetable Scanner</h3>
+  <p class="timetable-help">Upload a timetable image and convert it into a grid.</p>
+
+  <div class="timetable-actions">
+    <input type="file" id="timetableImage" accept="image/*">
+    <button id="scanTimetableBtn">Scan Timetable</button>
+    <button id="removeTimetableBtn">Remove Timetable</button>
+  </div>
+
+  <p id="ocrStatus" class="ocr-status"></p>
+  <div id="timetableOutput" class="timetable-output"></div>
+  <details class="ocr-debug">
+    <summary>OCR Text (Edit if needed)</summary>
+    <textarea id="ocrTextEditor" placeholder="Extracted OCR text will appear here..."></textarea>
+    <button id="buildFromTextBtn">Build Table from Text</button>
+  </details>
+</div>
+
+
+
+
+  <!-- SUBJECT LIST -->
+  <div id="subjectList"></div>
+
+  <!-- ADD SUBJECT MODAL -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h3>Add Subject</h3>
+
+      <input type="text" id="subName" placeholder="Subject Name">
+      <input type="number" id="subTotal" placeholder="Total Classes Conducted">
+      <input type="number" id="subAttended" placeholder="Total Classes Attended">
+
+      <div class="modal-actions">
+        <button id="saveSubject">Save</button>
+        <button id="closeModal">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+
+
+<button id="chat-toggle" class="chat-btn">💬 Ask Bunk Buddy</button>
+
+<div id="chat-window" class="chat-container" style="display: none;">
+    <div class="chat-header">
+        <span>Bunk Buddy AI</span>
+        <button id="close-chat">×</button>
+    </div>
+    <div id="chat-content" class="chat-messages">
+        <div class="msg bot">Yo! I'm Bunk Buddy. Give me your subject, and I'll tell you if you can skip.</div>
+    </div>
+    <div class="chat-input-area">
+        <input type="text" id="user-input" placeholder="e.g., Math 76%">
+        <button id="send-btn">Send</button>
+    </div>
+</div>
+
+
+</body>
+</html>
+
+
+
+
